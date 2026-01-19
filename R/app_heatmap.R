@@ -209,7 +209,6 @@ app_heatmap <- function(tomic) {
             value_var = input$measurement_var,
             cluster_dim = "both",
             change_threshold = thresholded_val(),
-            plot_type = "grob",
             # suppress feature aggregatin when feature facets are present
             max_display_features = ifelse(
               is.null(input$feature_facets),
@@ -269,7 +268,6 @@ app_heatmap <- function(tomic) {
 #' @inheritParams hclust_order
 #' @param change_threshold values with a more extreme absolute change will be
 #'   thresholded to this value.
-#' @param plot_type plotly (for interactivity) or grob (for a static ggplot)
 #' @inheritParams downsample_heatmap
 #' @param x_title label for x-axis (if NULL then use \code{feature_var})
 #' @param y_title label for y-axis (if NULL then use \code{sample_var})
@@ -299,7 +297,6 @@ app_heatmap <- function(tomic) {
 #'   value_var = "expression",
 #'   change_threshold = 5,
 #'   cluster_dim = "rows",
-#'   plot_type = "grob",
 #'   distance_measure = "corr",
 #'   transpose = FALSE
 #' )
@@ -313,7 +310,6 @@ plot_heatmap <- function(
     distance_measure = "dist",
     hclust_method = "ward.D2",
     change_threshold = Inf,
-    plot_type = "grob",
     max_display_features = 800,
     x_title = NULL,
     y_title = NULL,
@@ -338,7 +334,6 @@ plot_heatmap <- function(
   checkmate::assertChoice(distance_measure, c("corr", "dist"))
   checkmate::assertString(hclust_method)
   checkmate::assertNumber(change_threshold, lower = 0)
-  checkmate::assertChoice(plot_type, c("plotly", "grob"))
   checkmate::assertNumber(max_display_features)
   checkmate::assertLogical(transpose, len = 1)
 
@@ -505,14 +500,5 @@ plot_heatmap <- function(
     expand_limits(fill = c(-1 * change_threshold, change_threshold)) +
     heatmap_theme
 
-  if (plot_type == "grob") {
-    return(heatmap_plot)
-  } else if (plot_type == "plotly") {
-    suppressWarnings(
-      plotly::ggplotly(p = heatmap_plot) %>%
-        plotly::layout(margin = 0)
-    )
-  } else {
-    stop("undefined plotting type logic")
-  }
+  return(heatmap_plot)
 }

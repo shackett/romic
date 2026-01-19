@@ -56,9 +56,9 @@ jobs:
         run: |
           Rscript -e 'pkgdown::build_site()'
 
-          git config --global user.email "sean@calicolabs.com"
+          git config --global user.email "seanmchackett@gmail.com"
           git config --global user.name "Sean Hackett"
-          git clone https://$GITHUB_ACTOR:$GITHUB_PAT@github.com/calico/romic.git romic
+          git clone https://$GITHUB_ACTOR:$GITHUB_PAT@github.com/shackett/romic.git romic
 
           rm -r romic/docs
           mv docs romic/docs
