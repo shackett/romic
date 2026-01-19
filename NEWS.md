@@ -1,8 +1,12 @@
 ## romic 1.3.0
 
+### Major changes
+
+- Removed plotly dependency due to plotly package retirement from CRAN #1
+- Removed interactive plotting functions [`plot_heatmap`]
+
 ### New Features
 
-- Removed support for Plotly since the R package is no longer available. #1
 - Switched new primary repo to github.com/shackett/romic. github.com/calico/romic is now read-only
 - added `calculate_sample_mahalanobis_distances` to calculate the Mahalanobis distance of samples from the PC centroid Calico/#85
 - added `tomi` matrix export with `tomic_to_matrix`. Calico/#78
