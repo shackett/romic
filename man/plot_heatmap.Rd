@@ -13,7 +13,6 @@ plot_heatmap(
   distance_measure = "dist",
   hclust_method = "ward.D2",
   change_threshold = Inf,
-  plot_type = "grob",
   max_display_features = 800,
   x_title = NULL,
   y_title = NULL,
@@ -43,8 +42,6 @@ label.}
 
 \item{change_threshold}{values with a more extreme absolute change will be
 thresholded to this value.}
-
-\item{plot_type}{plotly (for interactivity) or grob (for a static ggplot)}
 
 \item{max_display_features}{aggregate and downsample distinct feature to
 this number to speed to up heatmap rendering.}
@@ -85,7 +82,6 @@ plot_heatmap(
   value_var = "expression",
   change_threshold = 5,
   cluster_dim = "rows",
-  plot_type = "grob",
   distance_measure = "corr",
   transpose = FALSE
 )

@@ -264,7 +264,7 @@ impute_missing_values <- function(
   ){
 
   if (!("impute" %in% rownames(utils::installed.packages()))) {
-    stop("Install \"impute\" using remotes::install_bioc(\"impute\") to use this function")
+    cli::cli_abort("Install \"impute\" following the instructions on {.url https://www.bioconductor.org/packages/release/bioc/html/impute.html}")
   }
 
   checkmate::assertClass(tomic, "tomic")

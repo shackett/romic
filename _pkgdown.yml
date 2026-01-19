@@ -3,34 +3,40 @@ reference:
   desc: "Represent high-dimensional datasets as features, samples and measurements"
 - contents:
   - create_tidy_omic
-  - check_tidy_omic
   - create_triple_omic
+  - check_tomic
+  - check_tidy_omic
   - check_triple_omic
+  - check_design
 - subtitle: "Converters"
+  desc: "Convert between the tidy, triple, and wide T*Omic formats"
 - contents:
   - get_tomic_table
   - tomic_to
-  - check_tomic
   - tidy_to_triple
   - triple_to_tidy
+  - reform_tidy_omic
+  - tomic_to_matrix
   - convert_wide_to_tidy_omic
 - subtitle: "Exports"
 - contents:
   - starts_with("export")
 - title: "Transformation"
 - subtitle: "Filtering"
+  desc: "Remove rows a T*Omic object"
 - contents:
   - filter_tomic
   - reconcile_triple_omic
   - remove_missing_values
 - subtitle: "Mutates"
+  desc: "Add additional information to a T*Omic object"
 - contents:
+  - add_pcs
+  - center_tomic
+  - impute_missing_values
   - update_tomic
   - update_tidy_omic
-  - center_tomic
-  - add_pcs
   - starts_with("sort")
-  - impute_missing_values
 - title: "Shiny Apps"
 - subtitle: "Full Apps"
 - contents:
@@ -64,10 +70,12 @@ reference:
   - prepare_example_datasets
 - subtitle: "Utils"
 - contents:
+  - calculate_sample_mahalanobis_distances
   - hclust_order
   - infer_tomic_table_type
   - try_brushedPoints
   - var_partial_match
+  - update_sample_factors
 template:
   params:
     bootswatch: flatly

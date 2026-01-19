@@ -17,14 +17,14 @@
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://calico.github.io/romic/}
-  \item \url{https://github.com/calico/romic}
-  \item Report bugs at \url{https://github.com/calico/romic/issues}
+  \item \url{https://shackett.github.io/romic/}
+  \item \url{https://github.com/shackett/romic}
+  \item Report bugs at \url{https://github.com/shackett/romic/issues}
 }
 
 }
 \author{
-\strong{Maintainer}: Sean Hackett \email{sean@calicolabs.com} (\href{https://orcid.org/0000-0002-9553-4341}{ORCID})
+\strong{Maintainer}: Sean Hackett \email{seanrhackett@gmail.com} (\href{https://orcid.org/0000-0002-9553-4341}{ORCID})
 
 Other contributors:
 \itemize{
