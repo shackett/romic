@@ -22,7 +22,7 @@ install.packages("remotes")
 remotes::install_github(
   "calico/romic",
   dependencies = TRUE
-  )
+)
 ```
 
 And, check out romic's [pkgdown site](https://calico.github.io/romic/index.html) for organized documentation.
