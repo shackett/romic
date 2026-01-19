@@ -17,7 +17,7 @@
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://shackett.github.io/romic/}
+  \item \url{https://shackett.org/romic-package/}
   \item \url{https://github.com/shackett/romic}
   \item Report bugs at \url{https://github.com/shackett/romic/issues}
 }

@@ -41,7 +41,7 @@ Suggests:
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-URL: https://shackett.github.io/romic/, https://github.com/shackett/romic
+URL: https://shackett.org/romic-package/, https://github.com/shackett/romic
 BugReports: https://github.com/shackett/romic/issues
 RoxygenNote: 7.3.3
 VignetteBuilder: knitr

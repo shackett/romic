@@ -1,3 +1,4 @@
+url: https://shackett.github.io/romic-package
 reference:
 - title: "Core Data Structures"
   desc: "Represent high-dimensional datasets as features, samples and measurements"
