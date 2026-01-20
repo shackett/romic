@@ -40,10 +40,13 @@ jobs:
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
         shell: Rscript {0}
 
-      - name: Deploy to GitHub pages 🚀
+      - name: Deploy docs to shackett.github.io/external 🚀
         if: github.event_name != 'pull_request'
-        uses: peaceiris/actions-gh-pages@v3
+        uses: JamesIves/github-pages-deploy-action@v4.5.0
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs
-          destination_dir: romic-package
+          clean: false
+          branch: master
+          folder: docs
+          target-folder: external/romic-docs
+          repository-name: shackett/shackett.github.io
+          token: ${{ secrets.DEPLOY_TOKEN }}
