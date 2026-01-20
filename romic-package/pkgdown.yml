@@ -1,0 +1,9 @@
+pandoc: 3.1.11
+pkgdown: 2.2.0
+pkgdown_sha: ~
+articles:
+  romic: romic.html
+last_built: 2026-01-20T00:39Z
+urls:
+  reference: https://shackett.github.io/romic-package/reference
+  article: https://shackett.github.io/romic-package/articles
