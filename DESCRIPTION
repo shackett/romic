@@ -1,7 +1,7 @@
 Package: romic
 Type: Package
-Title: R for High-Dimensional Omic Data
-Version: 1.3.0
+Title: R for High-Dimensional Molecular Data
+Version: 1.3.1
 Authors@R: c(
     person(
       given = "Sean",
@@ -41,7 +41,7 @@ Suggests:
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-URL: https://shackett.org/romic-package/, https://github.com/shackett/romic
+URL: https://www.shackett.org/external/romic-docs/, https://github.com/shackett/romic
 BugReports: https://github.com/shackett/romic/issues
 RoxygenNote: 7.3.3
 VignetteBuilder: knitr

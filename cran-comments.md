@@ -6,7 +6,7 @@
 * OSX - macOS Sequoia 15.7.3 (Github Actions), R 4.5.2
 
 ## R CMD check results
-R CMD check --as-cran romic_1.3.0.tar.gz 
+R CMD check --as-cran romic_1.3.1.tar.gz 
 
 1 note:
 
