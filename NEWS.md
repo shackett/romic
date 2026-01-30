@@ -1,3 +1,9 @@
+## romic 1.3.1
+
+### Minor Improvements and Fixes
+
+- updated pkgdown site deployment and link urls.
+
 ## romic 1.3.0
 
 ### Major changes

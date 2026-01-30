@@ -4,7 +4,7 @@
 \name{romic-package}
 \alias{romic}
 \alias{romic-package}
-\title{romic: R for High-Dimensional Omic Data}
+\title{romic: R for High-Dimensional Molecular Data}
 \description{
 'romic' represents high-dimensional data as tables of features,
   samples and measurements, and a design list for tracking the meaning of
@@ -17,7 +17,7 @@
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://shackett.org/romic-package/}
+  \item \url{https://www.shackett.org/external/romic-docs/}
   \item \url{https://github.com/shackett/romic}
   \item Report bugs at \url{https://github.com/shackett/romic/issues}
 }

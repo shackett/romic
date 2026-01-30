@@ -25,7 +25,7 @@ remotes::install_github(
 )
 ```
 
-The [blog post about romic](https://www.shackett.org/romic/) is an accessible introduction. Also, check out romic's [pkgdown site](https://shackett.org/romic-package/index.html) for organized documentation. 
+The [blog post about romic](https://www.shackett.org/romic/) is an accessible introduction. Also, check out romic's [pkgdown site](https://www.shackett.org/external/romic-docs/) for organized documentation. 
 
 Older versions of romic are available on the [Calico Github](https://github.com/calico/romic).
 
