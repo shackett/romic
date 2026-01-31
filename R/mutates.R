@@ -137,8 +137,8 @@ center <- function(x) {
 #' @inheritParams check_tidy_omic
 #' @param updated_tidy_data a tibble of data to use to update \code{tidy_omic}.
 #' @param new_variable_tables a named character vector of newly added variables
-#'   in \code{updated_tidy_data} (names) and the table \{features, samples,
-#'   measurements\} they apply to (values).
+#'   in \code{updated_tidy_data} (names) and the table (features, samples,
+#'   measurements) they apply to (values).
 #'
 #' @returns a \code{tidy_omic} object with an updated schema and/or data.
 #'

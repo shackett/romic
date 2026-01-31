@@ -1,3 +1,9 @@
+## romic 1.3.3
+
+### Minor Improvements and Fixes
+
+- Docstring cleanup and wrapping imputation function in dontrun since `impute` may not be installed from Bioconductor.
+
 ## romic 1.3.2
 
 ### Minor Improvements and Fixes
