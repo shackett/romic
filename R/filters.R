@@ -60,8 +60,7 @@ filter_tomic <- function(
   filter_value,
   filter_variable = NULL,
   invert = FALSE
-  ) {
-
+) {
   checkmate::assertClass(tomic, "tomic")
   checkmate::assertString(filter_type)
   checkmate::assertChoice(
@@ -73,37 +72,39 @@ filter_tomic <- function(
   # convert to triple_omic
   triple_omic <- tomic_to(tomic, "triple_omic")
 
-  VALID_FILTER_TYPES <-  c("category", "range", "quo")
+  VALID_FILTER_TYPES <- c("category", "range", "quo")
+
   if (filter_type %in% c("category", "range")) {
     checkmate::assertString(filter_variable)
-
     valid_variables <- colnames(triple_omic[[filter_table]])
+
     if (!(filter_variable %in% valid_variables)) {
-      cli::cli_abort(
-      "{.field {filter_variable}} is is not a valid value for {.arg filter_type},
-      valid values are all variables within the {filter_table} table:
-      {.field {valid_variables}}"
-      )
+      cli::cli_abort(c(
+        "Invalid filter variable",
+        "x" = "{.var {filter_variable}} is not a valid variable for the {.val {filter_table}} table",
+        "i" = "Valid variables: {.var {valid_variables}}"
+      ))
     }
 
     filter_var_type <- triple_omic$design[[filter_table]] %>%
       dplyr::filter(variable == filter_variable)
-
     filter_var_type <- filter_var_type$type[1]
   } else if (filter_type == "quo") {
     if (!("NULL" %in% class(filter_variable))) {
       cli::cli_alert_warning(
-        "{.arg filter_variable} was provided when {.arg filter_type} is {.field quo}
-        only a filter_value should be passed. filter_variable will be ignored"
+        "{.arg filter_variable} was provided when {.arg filter_type} is {.val quo}; only {.arg filter_value} should be passed. {.arg filter_variable} will be ignored"
       )
     }
   } else {
-    cli::cli_abort("{filter_type} is not a valid {.arg filter_type}. Valid types are {.field {VALID_FILTER_TYPES}}")
+    cli::cli_abort(c(
+      "Invalid filter type",
+      "x" = "{.val {filter_type}} is not a valid {.arg filter_type}",
+      "i" = "Valid types: {.val {VALID_FILTER_TYPES}}"
+    ))
   }
 
   if (filter_type == "category") {
     checkmate::assertVector(filter_value)
-
     updated_filtered_table <- triple_omic[[filter_table]] %>%
       dplyr::filter(
         !!rlang::sym(filter_variable) %in% !!rlang::quo(filter_value)
@@ -116,9 +117,11 @@ filter_tomic <- function(
     )
 
     if (filter_var_type == "character") {
-      stop(
-        filter_variable, " is categorical but a numerical filter was provided"
-      )
+      cli::cli_abort(c(
+        "Filter type mismatch",
+        "x" = "{.var {filter_variable}} is categorical but a numerical range filter was provided",
+        "i" = "Use {.code filter_type = 'category'} for categorical variables"
+      ))
     }
 
     updated_filtered_table <- triple_omic[[filter_table]] %>%
@@ -128,11 +131,14 @@ filter_tomic <- function(
       )
   } else if (filter_type == "quo") {
     checkmate::assertClass(filter_value, "quosure")
-
     updated_filtered_table <- triple_omic[[filter_table]] %>%
       dplyr::filter(!!filter_value)
   } else {
-    stop("Unexpected behavior")
+    cli::cli_abort(c(
+      "Unexpected behavior",
+      "x" = "This error should not occur",
+      "i" = "Please report this as a bug"
+    ))
   }
 
   # invert filter if invert is TRUE

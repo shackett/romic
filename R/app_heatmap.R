@@ -302,20 +302,20 @@ app_heatmap <- function(tomic) {
 #' )
 #' @export
 plot_heatmap <- function(
-    tomic,
-    feature_var = NULL,
-    sample_var = NULL,
-    value_var = NULL,
-    cluster_dim = "both",
-    distance_measure = "dist",
-    hclust_method = "ward.D2",
-    change_threshold = Inf,
-    max_display_features = 800,
-    x_title = NULL,
-    y_title = NULL,
-    colorbar_title = NULL,
-    transpose = FALSE
-    ) {
+  tomic,
+  feature_var = NULL,
+  sample_var = NULL,
+  value_var = NULL,
+  cluster_dim = "both",
+  distance_measure = "dist",
+  hclust_method = "ward.D2",
+  change_threshold = Inf,
+  max_display_features = 800,
+  x_title = NULL,
+  y_title = NULL,
+  colorbar_title = NULL,
+  transpose = FALSE
+  ) {
   checkmate::assertClass(tomic, "tomic")
 
   if ("NULL" %in% class(feature_var)) {

@@ -86,27 +86,28 @@ center_tomic <- function(tomic, measurement_vars = "all") {
     {
       .$variable
     }
+
   stopifnot(class(measurement_vars) == "character")
 
   if (measurement_vars[1] != "all") {
     excess_measurements <- setdiff(measurement_vars, possible_measurements)
+
     if (length(excess_measurements) != 0) {
-      stop(
-        paste(excess_measurements, collapse = ", "),
-        " are not valid numeric or integer measurement variables.
-        Valid measurements are: ",
-        paste(possible_measurements, collapse = ", ")
-      )
+      cli::cli_abort(c(
+        "Invalid measurement variables",
+        "x" = "{.var {excess_measurements}} {?is/are} not valid numeric or integer measurement variable{?s}",
+        "i" = "Valid measurements: {.var {possible_measurements}}"
+      ))
     }
 
     valid_measurements <- intersect(measurement_vars, possible_measurements)
 
     if (length(valid_measurements) == 0) {
-      stop(
-        "No valid numeric or integer measurement variables provided.
-        Valid measurements are: ",
-        paste(possible_measurements, collapse = ", ")
-      )
+      cli::cli_abort(c(
+        "No valid measurement variables",
+        "x" = "No valid numeric or integer measurement variables provided",
+        "i" = "Valid measurements: {.var {possible_measurements}}"
+      ))
     }
   } else {
     valid_measurements <- possible_measurements
@@ -118,7 +119,7 @@ center_tomic <- function(tomic, measurement_vars = "all") {
 
   triple_omic$measurements <- triple_omic$measurements %>%
     dplyr::group_by(!!rlang::sym(measurement_pk)) %>%
-    dplyr::mutate(dplyr::across(c(!!!syms(valid_measurements)), center)) %>%
+    dplyr::mutate(dplyr::across(dplyr::all_of(valid_measurements), center)) %>%
     dplyr::ungroup()
 
   # convert back to initial class
@@ -155,14 +156,15 @@ center <- function(x) {
 #'
 #' @export
 update_tidy_omic <- function(
-    tidy_omic,
-    updated_tidy_data,
-    new_variable_tables = c()
-    ) {
+  tidy_omic,
+  updated_tidy_data,
+  new_variable_tables = c()
+) {
   checkmate::assertClass(tidy_omic, "tomic")
   checkmate::assertClass(tidy_omic, "tidy_omic")
   checkmate::assertDataFrame(updated_tidy_data)
   checkmate::assertNamed(new_variable_tables, type = "unique")
+
   purrr::walk(
     names(new_variable_tables),
     checkmate::assertChoice,
@@ -176,7 +178,6 @@ update_tidy_omic <- function(
 
   # check whether all new variables are defined in new_variable_tables
   current_fields <- get_design_tbl(tidy_omic)
-
   new_variables <- setdiff(colnames(updated_tidy_data), current_fields$variable)
   unclassified_new_variables <- setdiff(
     new_variables,
@@ -184,16 +185,15 @@ update_tidy_omic <- function(
   )
 
   if (length(unclassified_new_variables) > 0) {
-    stop(glue::glue(
-      "updated_tidy_data contains {length(unclassified_new_variables)}
-       - new fields: {paste(unclassified_new_variables, collapse = ', ')}.
-       - Add these to \"new_variable_tables\" so that romic know how to
-       - use them."
+    n_vars <- length(unclassified_new_variables)
+    cli::cli_abort(c(
+      "Unclassified new variables",
+      "x" = "{.arg updated_tidy_data} contains {n_vars} new variable{?s}: {.var {unclassified_new_variables}}",
+      "i" = "Add {cli::qty(n_vars)}{?this variable/these variables} to {.arg new_variable_tables} so romic knows how to use {?it/them}"
     ))
   }
 
   current_fields <- get_design_tbl(tidy_omic)
-
   updated_fields <- current_fields %>%
     # remove unused variables
     dplyr::filter(
@@ -239,9 +239,9 @@ update_tidy_omic <- function(
     )
 
   if (length(excess_vars) > 0) {
-    stop(glue::glue(
-      "{length(excess_vars)} were not matched updated_tidy_data and its
-       - to-be-created design list: {paste(excess_vars, collapse = ', ')}"
+    cli::cli_abort(c(
+      "Variable mismatch",
+      "x" = "{length(excess_vars)} variable{?s} {?was/were} not matched between {.arg updated_tidy_data} and the design list: {.var {excess_vars}}"
     ))
   }
 
@@ -271,20 +271,24 @@ sort_triple_hclust <- function(triple_omic, sort_table, value_var) {
     any(c("character", "factor", "ordered") %in% class(value_var)),
     length(value_var) == 1
   )
+
   available_value_vars <- triple_omic$design$measurements$variable[
     triple_omic$design$measurements$type == "numeric"
   ]
+
   if (length(available_value_vars) == 0) {
-    stop(
-      "No numeric variables present in measurement
-        hierarchical clustering not possible"
-    )
+    cli::cli_abort(c(
+      "No numeric variables available",
+      "x" = "No numeric variables present in measurements",
+      "i" = "Hierarchical clustering requires at least one numeric measurement variable"
+    ))
   }
 
   if (!(value_var %in% available_value_vars)) {
-    stop(glue::glue(
-      "{value_var} is not present in measurements, valid value_vars include:
-        {paste(available_value_vars, collapse = ", ")}"
+    cli::cli_abort(c(
+      "Invalid value variable",
+      "x" = "{.var {value_var}} is not present in measurements",
+      "i" = "Valid value variables: {.var {available_value_vars}}"
     ))
   }
 
@@ -317,14 +321,15 @@ sort_triple_hclust <- function(triple_omic, sort_table, value_var) {
   }
 
   # use the ordered clusters to sort the appropriate sort_table
-
-  sorted_table <- (triple_omic[[sort_table]] %>%
-    dplyr::left_join(
-      tibble::tibble(!!rlang::sym(pk) := cluster_orders) %>%
-        dplyr::mutate(order = seq_len(dplyr::n())),
-      by = pk
-    ) %>%
-    dplyr::arrange(order))
+  sorted_table <- (
+    triple_omic[[sort_table]] %>%
+       dplyr::left_join(
+         tibble::tibble(!!rlang::sym(pk) := cluster_orders) %>%
+           dplyr::mutate(order = seq_len(dplyr::n())),
+         by = pk
+       ) %>%
+       dplyr::arrange(order)
+  )
 
   return(sorted_table)
 }
@@ -349,9 +354,11 @@ sort_triple_arrange <- function(triple_omic, sort_table, sort_variables) {
   available_sort_vars <- triple_omic$design[[sort_table]]$variable
   invalid_sort_vars <- setdiff(sort_variables, available_sort_vars)
   if (length(invalid_sort_vars) != 0) {
-    stop(glue::glue(
-      "{length(invalid_sort_vars)} sort variables were not found in {sort_table},
-      the variable present are: {paste(available_sort_vars, collapse = ', ')}"
+    n_invalid <- length(invalid_sort_vars)
+    cli::cli_abort(c(
+      "Invalid sort variables",
+      "x" = "{n_invalid} sort variable{?s} {?was/were} not found in {.val {sort_table}}: {.var {invalid_sort_vars}}",
+      "i" = "Available variables: {.var {available_sort_vars}}"
     ))
   }
 
@@ -400,11 +407,13 @@ sort_triple_arrange <- function(triple_omic, sort_table, sort_variables) {
 #'     value_var = "expression"
 #'   )
 #' @export
-sort_tomic <- function(tomic,
-                       sort_type,
-                       sort_table,
-                       sort_variables = NULL,
-                       value_var = NULL) {
+sort_tomic <- function(
+  tomic,
+  sort_type,
+  sort_table,
+  sort_variables = NULL,
+  value_var = NULL
+  ) {
   checkmate::assertClass(tomic, "tomic")
   checkmate::assertChoice(sort_type, c("hclust", "arrange"))
   checkmate::assertChoice(sort_table, c("features", "samples"))
@@ -423,7 +432,7 @@ sort_tomic <- function(tomic,
       sort_variables
     )
   } else {
-    stop(sort_type, " has no defined sort method")
+    cli::cli_abort("{.arg {sort_type}} has no defined sort method")
   }
 
   pk <- ifelse(
@@ -488,7 +497,11 @@ tomic_sort_status <- function(tomic) {
     is_sorted_samples <- any(class(tomic$samples[[tomic$design$sample_pk]]) %in%
       c("factor", "ordered"))
   } else {
-    stop("undefined behavior")
+    cli::cli_abort(c(
+      "Invalid tomic subclass",
+      "!" = "Object has {.cls tomic} class but is neither {.cls tidy_omic} nor {.cls triple_omic}",
+      "i" = "This is an internal error - please report this bug"
+    ))
   }
 
   status <- dplyr::case_when(

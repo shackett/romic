@@ -105,13 +105,13 @@ export_tomic_as_tidy <- function(tomic, dir_path, name_preamble, verbose = TRUE)
 #' }
 #' @export
 export_tomic_as_wide <- function(
-  tomic,
-  dir_path,
-  name_preamble,
-  value_var = NULL,
-  transpose = FALSE,
-  verbose = TRUE
-  ) {
+    tomic,
+    dir_path,
+    name_preamble,
+    value_var = NULL,
+    transpose = FALSE,
+    verbose = TRUE
+) {
   checkmate::assertDirectory(dir_path)
   checkmate::assertString(name_preamble)
   checkmate::assertLogical(transpose, len = 1)
@@ -119,7 +119,6 @@ export_tomic_as_wide <- function(
 
   triple_omic <- tomic_to(tomic, "triple_omic")
   design <- triple_omic$design
-
   measurements_matrix <- tomic_to_matrix(triple_omic, value_var)
 
   if (transpose) {
@@ -133,8 +132,8 @@ export_tomic_as_wide <- function(
   # create a top-left-null section
   n_feature_attr <- nrow(design$features)
   n_sample_attr <- nrow(design$samples)
-
   top_left_void <- matrix(nrow = n_sample_attr, ncol = n_feature_attr)
+
   if (transpose) {
     top_left_void <- t(top_left_void)
   }
@@ -144,14 +143,13 @@ export_tomic_as_wide <- function(
   # setup sample and peakgroup attributes
   # match feature and sample primary keys to class of acast to make
   # sure sample and features will be aligned with their measurements
-
   ordered_samples <- triple_omic$samples %>%
     dplyr::mutate(!!rlang::sym(design$sample_pk) := factor(
       !!rlang::sym(design$sample_pk),
       levels = sample_labels
     )) %>%
     dplyr::arrange(!!rlang::sym(design$sample_pk)) %>%
-    dplyr::mutate_all(as.character)
+    dplyr::mutate(dplyr::across(dplyr::everything(), as.character))
 
   ordered_features <- triple_omic$features %>%
     dplyr::mutate(!!rlang::sym(design$feature_pk) := factor(
@@ -159,8 +157,8 @@ export_tomic_as_wide <- function(
       levels = feature_labels
     )) %>%
     dplyr::arrange(!!rlang::sym(design$feature_pk)) %>%
-    dplyr::mutate_if(is.numeric, round, 3) %>%
-    dplyr::mutate_all(as.character)
+    dplyr::mutate(dplyr::across(dplyr::where(is.numeric), \(x) round(x, 3))) %>%
+    dplyr::mutate(dplyr::across(dplyr::everything(), as.character))
 
   if (transpose) {
     stopifnot(
@@ -228,6 +226,7 @@ export_tomic_as_wide <- function(
 
   filename <- paste0(name_preamble, "_", "wide.tsv")
   filepath <- file.path(dir_path, filename)
+
   if (verbose) {
     cli::cli_alert_info("Saving wide data {.file {filepath}}")
   }
