@@ -791,16 +791,16 @@ convert_wide_to_tidy_omic <- function(
 
   # Check for mixed types in measurement columns
   sample_col_types <- wide_df %>%
-    dplyr::select(all_of(sample_names)) %>%
+    dplyr::select(dplyr::all_of(sample_names)) %>%
     purrr::map_chr(~ class(.x)[1]) %>%
     unique()
 
   if (length(sample_col_types) > 1) {
     # Get examples of each type
     type_examples <- wide_df %>%
-      dplyr::select(all_of(sample_names)) %>%
+      dplyr::select(dplyr::all_of(sample_names)) %>%
       purrr::imap(~ paste0(.y, " <", class(.x)[1], ">")) %>%
-      head(5) %>%
+      utils::head(5) %>%
       unlist()
 
     cli::cli_abort(c(
@@ -814,7 +814,7 @@ convert_wide_to_tidy_omic <- function(
 
   # test whether unique_feature_variable is really unique
   grouped_by_unique_var <- wide_df %>%
-    dplyr::group_by(across(all_of(feature_pk))) %>%
+    dplyr::group_by(dplyr::across(dplyr::all_of(feature_pk))) %>%
     dplyr::mutate(entry_number = seq_len(dplyr::n()))
 
   n_duplicates <- sum(grouped_by_unique_var$entry_number != 1)
@@ -831,11 +831,11 @@ convert_wide_to_tidy_omic <- function(
 
     # Create unique feature names
     unique_feature_names <- grouped_by_unique_var %>%
-      dplyr::select(all_of(c(feature_pk, "entry_number"))) %>%
-      dplyr::group_by(across(all_of(feature_pk))) %>%
+      dplyr::select(dplyr::all_of(c(feature_pk, "entry_number"))) %>%
+      dplyr::group_by(dplyr::across(dplyr::all_of(feature_pk))) %>%
       dplyr::mutate(
         n_entries = n(),
-        "unique_{feature_pk}" := if_else(
+        "unique_{feature_pk}" := dplyr::if_else(
           n_entries == 1,
           .data[[feature_pk]],
           paste0(.data[[feature_pk]], "-", entry_number)
@@ -862,7 +862,7 @@ convert_wide_to_tidy_omic <- function(
   tall_dataset <- grouped_by_unique_var %>%
     dplyr::ungroup() %>%
     tidyr::pivot_longer(
-      cols = all_of(sample_names),
+      cols = dplyr::all_of(sample_names),
       names_to = sample_var,
       values_to = measurement_var
     )

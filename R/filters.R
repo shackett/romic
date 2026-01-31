@@ -54,12 +54,12 @@
 #' )
 #' @export
 filter_tomic <- function(
-    tomic,
-    filter_type,
-    filter_table,
-    filter_value,
-    filter_variable = NULL,
-    invert = FALSE
+  tomic,
+  filter_type,
+  filter_table,
+  filter_value,
+  filter_variable = NULL,
+  invert = FALSE
 ) {
   checkmate::assertClass(tomic, "tomic")
   checkmate::assertString(filter_type)

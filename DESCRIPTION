@@ -1,7 +1,7 @@
 Package: romic
 Type: Package
 Title: R for High-Dimensional Molecular Data
-Version: 1.3.1
+Version: 1.3.2
 Authors@R: c(
     person(
       given = "Sean",
@@ -17,7 +17,7 @@ Authors@R: c(
     )
 Description: Represents high-dimensional data as tables of features, samples and measurements, and a design list for tracking the meaning of individual variables. Using this format, filtering, normalization, and other transformations of a dataset can be carried out in a flexible manner. 'romic' takes advantage of these transformations to create interactive 'shiny' apps for exploratory data analysis such as an interactive heatmap. 
 Depends: 
-    R (>= 3.5)
+    R (>= 4.1)
 biocViews:
 Imports: checkmate,
     cli,

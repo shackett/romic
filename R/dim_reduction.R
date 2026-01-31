@@ -20,13 +20,13 @@
 #'
 #' @export
 add_pcs <- function(
-    tomic,
-    value_var = NULL,
-    center_rows = TRUE,
-    npcs = NULL,
-    missing_val_method = "drop_samples",
-    label_percent_varex = TRUE,
-    verbose = TRUE
+  tomic,
+  value_var = NULL,
+  center_rows = TRUE,
+  npcs = NULL,
+  missing_val_method = "drop_samples",
+  label_percent_varex = TRUE,
+  verbose = TRUE
 ) {
   checkmate::assertClass(tomic, "tomic")
   checkmate::assertLogical(center_rows, len = 1)
@@ -141,11 +141,11 @@ add_pcs <- function(
 #'
 #' @export
 remove_missing_values <- function(
-    tomic,
-    value_var = NULL,
-    missing_val_method = "drop_samples",
-    missing_value_types = c("NA", "NaN", "Inf"),
-    verbose = FALSE
+  tomic,
+  value_var = NULL,
+  missing_val_method = "drop_samples",
+  missing_value_types = c("NA", "NaN", "Inf"),
+  verbose = FALSE
 ) {
   checkmate::assertClass(tomic, "tomic")
   checkmate::assertChoice(
@@ -251,7 +251,7 @@ impute_missing_values <- function(
   impute_var_name = "imputed",
   value_var = NULL,
   ...
-  ){
+){
   if (!("impute" %in% rownames(utils::installed.packages()))) {
     cli::cli_abort("Install \"impute\" following the instructions on {.url https://www.bioconductor.org/packages/release/bioc/html/impute.html}")
   }

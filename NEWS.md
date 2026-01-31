@@ -1,3 +1,11 @@
+## romic 1.3.2
+
+### Minor Improvements and Fixes
+
+- upgraded defunction mutate_ call #7
+- upgraded mutate_at, mutate_if, select_if, etc to use mutate/select and across
+- improved warnings and errors by switching to `cli`
+
 ## romic 1.3.1
 
 ### Minor Improvements and Fixes
