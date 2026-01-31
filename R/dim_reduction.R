@@ -243,7 +243,10 @@ remove_missing_values <- function(
 #' @returns A \code{tomic} object with imputed measurements.
 #'
 #' @examples
+#' \dontrun{
+#' # Requires the 'impute' package from Bioconductor
 #' impute_missing_values(brauer_2008_triple)
+#' }
 #'
 #' @export
 impute_missing_values <- function(
