@@ -40,7 +40,6 @@ Convert a wide dataset of species' abundances (gene product, metabolites,
   lipids, ...) into a triple_omic dataset (one observation per row)
 }
 \examples{
-
 library(dplyr)
 
 wide_measurements <- brauer_2008_triple[["measurements"]] \%>\%

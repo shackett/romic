@@ -723,7 +723,6 @@ tidy_to_triple <- function(tidy_omic) {
 #' @returns A \code{tidy_omic} object as produced by \code{create_tidy_omic}.
 #'
 #' @examples
-#'
 #' library(dplyr)
 #'
 #' wide_measurements <- brauer_2008_triple[["measurements"]] %>%
@@ -738,15 +737,14 @@ tidy_to_triple <- function(tidy_omic) {
 #' )
 #' @export
 convert_wide_to_tidy_omic <- function(
-  wide_df,
-  feature_pk,
-  feature_vars = NULL,
-  sample_var = "sample",
-  measurement_var = "abundance",
-  omic_type_tag = "general",
-  verbose = TRUE
-  ) {
-
+    wide_df,
+    feature_pk,
+    feature_vars = NULL,
+    sample_var = "sample",
+    measurement_var = "abundance",
+    omic_type_tag = "general",
+    verbose = TRUE
+) {
   checkmate::assertDataFrame(wide_df)
   checkmate::assertChoice(feature_pk, colnames(wide_df))
   stopifnot(class(feature_vars) %in% c("character", "NULL"))
@@ -771,58 +769,72 @@ convert_wide_to_tidy_omic <- function(
     c(feature_pk, feature_vars)
   )
   if (length(reserved_variable_use) != 0) {
-    stop(
-      paste(reserved_variable_use, collapse = ", "),
-      " are reserved variable names"
-    )
+    cli::cli_abort(c(
+      "Reserved variable names detected",
+      "x" = "{length(reserved_variable_use)} reserved variables {?is/are} reserved variable {?name/names}: {.var {reserved_variable_use}}",
+      "i" = "Please rename {?this/these} {length(reserved_variable_use)} {?variable/variables} in your input data"
+    ))
+  }
+
+  # Calculate sample_names early from the original wide_df
+  # This avoids issues with grouped data frames
+  sample_names <- setdiff(
+    colnames(wide_df),
+    c(feature_pk, feature_vars)
+  )
+
+  # Check for mixed types in measurement columns
+  sample_col_types <- wide_df %>%
+    dplyr::select(all_of(sample_names)) %>%
+    purrr::map_chr(~ class(.x)[1]) %>%
+    unique()
+
+  if (length(sample_col_types) > 1) {
+    # Get examples of each type
+    type_examples <- wide_df %>%
+      dplyr::select(all_of(sample_names)) %>%
+      purrr::imap(~ paste0(.y, " <", class(.x)[1], ">")) %>%
+      head(5) %>%
+      unlist()
+
+    cli::cli_abort(c(
+      "Measurement columns have mixed types",
+      "x" = "Found {length(sample_col_types)} different type{?s}: {.cls {sample_col_types}}",
+      "i" = "Examples: {.var {type_examples}}",
+      "!" = "Did you forget to specify {.arg feature_vars}?",
+      "i" = "Non-numeric columns should be included in {.arg feature_vars}"
+    ))
   }
 
   # test whether unique_feature_variable is really unique
   grouped_by_unique_var <- wide_df %>%
-    dplyr::group_by(!!rlang::sym(feature_pk)) %>%
+    dplyr::group_by(across(all_of(feature_pk))) %>%
     dplyr::mutate(entry_number = seq_len(dplyr::n()))
 
-  if (sum(grouped_by_unique_var$entry_number != 1) == 0) {
+  n_duplicates <- sum(grouped_by_unique_var$entry_number != 1)
+
+  if (n_duplicates == 0) {
     grouped_by_unique_var <- grouped_by_unique_var %>%
       dplyr::select(-entry_number)
   } else {
-    warning(
-      sum(grouped_by_unique_var$entry_number != 1),
-      " rows did not contain a unique ",
-      feature_pk,
-      "; adding extra variables 'unique_",
-      feature_pk,
-      "' & 'entry_number' to distinguish them"
-    )
+    cli::cli_warn(c(
+      "Non-unique feature identifiers detected",
+      "!" = "{n_duplicates} row{?s} did not contain a unique {.var {feature_pk}}",
+      "i" = "Adding extra variables {.var unique_{feature_pk}} and {.var entry_number} to distinguish them"
+    ))
 
-    mutate_call <- function(unique_var, n_entries, entry_number) {
-      stats::setNames(
-        list(lazyeval::interp(
-          ~ ifelse(
-            n_entries == 1,
-            unique_var,
-            paste0(unique_var, "-", entry_number)
-          ),
-          n_entries = as.name(n_entries),
-          unique_var = as.name(unique_var),
-          entry_number = as.name(entry_number)
-        )),
-        paste0("unique_", feature_pk)
-      )
-    }
-
-    # force each feature to be a unique variable (if multiple peaks are called
-    # for the same compound)
+    # Create unique feature names
     unique_feature_names <- grouped_by_unique_var %>%
-      dplyr::select(!!!rlang::syms(c(feature_pk, "entry_number"))) %>%
-      dplyr::group_by(!!rlang::sym(feature_pk)) %>%
-      dplyr::mutate(n_entries = dplyr::n()) %>%
-      dplyr::rowwise() %>%
-      dplyr::mutate_(.dots = mutate_call(
-        feature_pk,
-        "n_entries",
-        "entry_number"
-      )) %>%
+      dplyr::select(all_of(c(feature_pk, "entry_number"))) %>%
+      dplyr::group_by(across(all_of(feature_pk))) %>%
+      dplyr::mutate(
+        n_entries = n(),
+        "unique_{feature_pk}" := if_else(
+          n_entries == 1,
+          .data[[feature_pk]],
+          paste0(.data[[feature_pk]], "-", entry_number)
+        )
+      ) %>%
       dplyr::select(-n_entries)
 
     grouped_by_unique_var <- grouped_by_unique_var %>%
@@ -833,19 +845,20 @@ convert_wide_to_tidy_omic <- function(
 
     feature_vars <- c(feature_pk, "entry_number", feature_vars)
     feature_pk <- paste0("unique_", feature_pk)
-  }
 
-  sample_names <- setdiff(
-    colnames(grouped_by_unique_var),
-    c(feature_pk, feature_vars)
-  )
+    # Recalculate sample_names after feature_pk and feature_vars change
+    sample_names <- setdiff(
+      colnames(grouped_by_unique_var),
+      c(feature_pk, feature_vars)
+    )
+  }
 
   tall_dataset <- grouped_by_unique_var %>%
     dplyr::ungroup() %>%
-    tidyr::gather(
-      !!rlang::sym(sample_var),
-      !!rlang::sym(measurement_var),
-      !!!rlang::syms(sample_names)
+    tidyr::pivot_longer(
+      cols = all_of(sample_names),
+      names_to = sample_var,
+      values_to = measurement_var
     )
 
   tidy_omic <- create_tidy_omic(

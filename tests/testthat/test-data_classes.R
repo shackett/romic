@@ -216,54 +216,142 @@ test_that("Unstructured data preserved using tomic_to", {
 
 
 test_that("Read wide data", {
-
   wide_measurements <- brauer_2008_triple[["measurements"]] %>%
     tidyr::spread(sample, expression)
-
   wide_df <- brauer_2008_triple[["features"]] %>%
     left_join(wide_measurements, by = "name")
-
   tidy_omic <- convert_wide_to_tidy_omic(
     wide_df,
     feature_pk = "name",
     feature_vars = c("BP", "MF", "systematic_name"),
     verbose = FALSE
   )
-
   testthat::expect_s3_class(tidy_omic, "tidy_omic")
-
 })
 
-
 test_that("Catch corner cases when reading wide data", {
-
   wide_measurements <- brauer_2008_triple[["measurements"]] %>%
     tidyr::spread(sample, expression)
-
   wide_df <- brauer_2008_triple[["features"]] %>%
     left_join(wide_measurements, by = "name")
 
   # reserved name is used
   wide_df_w_reserved <- wide_df %>%
     dplyr::rename(entry_number = name)
-
   expect_error(
     convert_wide_to_tidy_omic(
       wide_df_w_reserved,
-      feature_pk = "entry_number"
+      feature_pk = "entry_number",
+      feature_vars = c("BP", "MF", "systematic_name")
     ),
-    "entry_number are reserved variable names"
+    "Reserved variable names detected"
   )
 
+  # non-unique feature IDs
   wide_df_nonunique_feature_id <- wide_df
   wide_df_nonunique_feature_id$name[1:5] <- wide_df_nonunique_feature_id$name[1]
-
   expect_snapshot(
-    convert_wide_to_tidy_omic(
+    result <- convert_wide_to_tidy_omic(
       wide_df_nonunique_feature_id,
-      feature_pk = "name"
+      feature_pk = "name",
+      feature_vars = c("BP", "MF", "systematic_name"),
+      verbose = FALSE
     )
   )
+
+  # Verify non-unique IDs create correct unique names
+  first_name <- wide_df_nonunique_feature_id$name[1]
+  unique_names <- result$data %>%
+    filter(name == first_name) %>%
+    pull(unique_name) %>%
+    unique() %>%
+    sort()
+
+  expected_names <- paste0(first_name, "-", 1:5)
+  expect_equal(unique_names, expected_names)
+
+  # Verify entry_number is preserved in data
+  expect_true("entry_number" %in% names(result$data))
+
+  # Verify original feature_pk (name) becomes a feature variable in data
+  expect_true("name" %in% names(result$data))
+
+  # Verify the new feature_pk is unique_name
+  expect_equal(result$design$feature_pk, "unique_name")
+
+  # Verify name is now listed as a feature variable in design
+  expect_true("name" %in% result$design$features$variable)
+})
+
+test_that("Mixed types in measurements throw informative error", {
+  wide_measurements <- brauer_2008_triple[["measurements"]] %>%
+    tidyr::spread(sample, expression)
+  wide_df <- brauer_2008_triple[["features"]] %>%
+    left_join(wide_measurements, by = "name")
+
+  # Forget to specify feature_vars - should error with helpful message
+  expect_error(
+    convert_wide_to_tidy_omic(
+      wide_df,
+      feature_pk = "name"
+    ),
+    "Measurement columns have mixed types.*Did you forget to specify.*feature_vars"
+  )
+})
+
+test_that("pivot_longer produces correct structure", {
+  wide_measurements <- brauer_2008_triple[["measurements"]] %>%
+    tidyr::spread(sample, expression)
+  wide_df <- brauer_2008_triple[["features"]] %>%
+    left_join(wide_measurements, by = "name")
+
+  result <- convert_wide_to_tidy_omic(
+    wide_df,
+    feature_pk = "name",
+    feature_vars = c("BP", "MF", "systematic_name"),
+    verbose = FALSE
+  )
+
+  # Verify all samples are present
+  n_samples <- ncol(wide_measurements) - 1
+  n_features <- nrow(wide_df)
+
+  expect_equal(nrow(result$data), n_samples * n_features)
+
+  # Verify sample column exists and has no NAs
+  sample_pk <- result$design$sample_pk
+  expect_true(sample_pk %in% names(result$data))
+  expect_false(any(is.na(result$data[[sample_pk]])))
+
+  # Verify sample names are preserved
+  expected_samples <- setdiff(colnames(wide_measurements), "name")
+  actual_samples <- unique(result$data[[sample_pk]])
+  expect_setequal(actual_samples, expected_samples)
+})
+
+test_that("Custom variable names work correctly", {
+  wide_measurements <- brauer_2008_triple[["measurements"]] %>%
+    tidyr::spread(sample, expression)
+  wide_df <- brauer_2008_triple[["features"]] %>%
+    left_join(wide_measurements, by = "name")
+
+  result <- convert_wide_to_tidy_omic(
+    wide_df,
+    feature_pk = "name",
+    feature_vars = c("BP", "MF", "systematic_name"),
+    sample_var = "sample_id",
+    measurement_var = "intensity",
+    verbose = FALSE
+  )
+
+  expect_true("sample_id" %in% names(result$data))
+  expect_true("intensity" %in% names(result$data))
+  expect_false("sample" %in% names(result$data))
+  expect_false("abundance" %in% names(result$data))
+
+  # Verify design reflects custom names
+  expect_equal(result$design$sample_pk, "sample_id")
+  expect_true("intensity" %in% result$design$measurements$variable)
 })
 
 
