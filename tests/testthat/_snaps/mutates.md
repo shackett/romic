@@ -4,8 +4,9 @@
       center_tomic(brauer_2008_tidy, measurement_vars = "foo")
     Condition
       Error in `center_tomic()`:
-      ! foo are not valid numeric or integer measurement variables.
-              Valid measurements are: expression
+      ! Invalid measurement variables
+      x `foo` is not valid numeric or integer measurement variable
+      i Valid measurements: `expression`
 
 # Sort tables and update primary keys with new sort
 
@@ -33,8 +34,9 @@
       .
     Condition
       Error in `sort_triple_hclust()`:
-      ! bar is not present in measurements, valid value_vars include:
-      expression
+      ! Invalid value variable
+      x `bar` is not present in measurements
+      i Valid value variables: `expression`
 
 # Factor levels can be updated using a list of factor orders
 
@@ -83,8 +85,7 @@
       update_tidy_omic(tidy_omic, updated_tidy_data, c())
     Condition
       Error in `update_tidy_omic()`:
-      ! updated_tidy_data contains 1
-      - new fields: new_sample_var.
-      - Add these to "new_variable_tables" so that romic know how to
-      - use them.
+      ! Unclassified new variables
+      x `updated_tidy_data` contains 1 new variable: `new_sample_var`
+      i Add this variable to `new_variable_tables` so romic knows how to use it
 

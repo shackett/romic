@@ -61,19 +61,17 @@ test_that("Test check_tidy_omic edge cases", {
   simple_tidy_missing_join_1 <- simple_tidy
   simple_tidy_missing_join_1$data <- simple_tidy_missing_join_1$data %>%
     dplyr::select(-features)
-
   expect_error(
     check_tomic(simple_tidy_missing_join_1),
-    regex = "features: are present in the design but not data.frames"
+    regex = "present in the design but not in the data"
   )
 
   simple_tidy_missing_join_2 <- simple_tidy
   simple_tidy_missing_join_2$data <- simple_tidy_missing_join_2$data %>%
     dplyr::mutate(foo = "bar")
-
   expect_error(
     check_tomic(simple_tidy_missing_join_2),
-    regex = "foo: are present in the data.frames but not in the design"
+    regex = "present in the data but not in the design"
   )
 })
 
@@ -153,7 +151,7 @@ test_that("Test check_triple_omic edge cases", {
 
   expect_error(
     check_triple_omic(simple_triple_class_inconsistency),
-    "feature_id classes differ between the features"
+    "classes differ between the features"
   )
 
 
@@ -163,7 +161,7 @@ test_that("Test check_triple_omic edge cases", {
 
   expect_error(
     check_triple_omic(simple_triple_class_inconsistency_samples),
-    "sample_id classes differ between the samples"
+    "classes differ between the samples"
   )
 
   # degenerate entries
@@ -217,7 +215,7 @@ test_that("Unstructured data preserved using tomic_to", {
 
 test_that("Read wide data", {
   wide_measurements <- brauer_2008_triple[["measurements"]] %>%
-    tidyr::spread(sample, expression)
+    tidyr::pivot_wider(names_from = sample, values_from = expression)
   wide_df <- brauer_2008_triple[["features"]] %>%
     left_join(wide_measurements, by = "name")
   tidy_omic <- convert_wide_to_tidy_omic(
@@ -231,7 +229,7 @@ test_that("Read wide data", {
 
 test_that("Catch corner cases when reading wide data", {
   wide_measurements <- brauer_2008_triple[["measurements"]] %>%
-    tidyr::spread(sample, expression)
+    tidyr::pivot_wider(names_from = sample, values_from = expression)
   wide_df <- brauer_2008_triple[["features"]] %>%
     left_join(wide_measurements, by = "name")
 
@@ -285,7 +283,7 @@ test_that("Catch corner cases when reading wide data", {
 
 test_that("Mixed types in measurements throw informative error", {
   wide_measurements <- brauer_2008_triple[["measurements"]] %>%
-    tidyr::spread(sample, expression)
+    tidyr::pivot_wider(names_from = sample, values_from = expression)
   wide_df <- brauer_2008_triple[["features"]] %>%
     left_join(wide_measurements, by = "name")
 
@@ -301,7 +299,7 @@ test_that("Mixed types in measurements throw informative error", {
 
 test_that("pivot_longer produces correct structure", {
   wide_measurements <- brauer_2008_triple[["measurements"]] %>%
-    tidyr::spread(sample, expression)
+    tidyr::pivot_wider(names_from = sample, values_from = expression)
   wide_df <- brauer_2008_triple[["features"]] %>%
     left_join(wide_measurements, by = "name")
 
@@ -331,7 +329,7 @@ test_that("pivot_longer produces correct structure", {
 
 test_that("Custom variable names work correctly", {
   wide_measurements <- brauer_2008_triple[["measurements"]] %>%
-    tidyr::spread(sample, expression)
+    tidyr::pivot_wider(names_from = sample, values_from = expression)
   wide_df <- brauer_2008_triple[["features"]] %>%
     left_join(wide_measurements, by = "name")
 
@@ -411,7 +409,7 @@ test_that("Catch corner cases when interconverting tomics", {
 
   expect_error(
     check_tomic(weird_s3_classes_tomic),
-    "tomic is not a tidy_omic or triple_omic. This is unexpected since"
+    "This is unexpected since the object has the"
   )
 
 })

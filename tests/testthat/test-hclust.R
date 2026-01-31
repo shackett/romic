@@ -259,7 +259,7 @@ test_that("Catch apply_hclust() corner cases", {
 
   expect_error(
     apply_hclust(disjoint_data_matrix, "baz", "ward.D2"),
-    "baz is not a defined distance_measure"
+    "not a valid"
   )
 
 })

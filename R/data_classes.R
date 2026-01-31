@@ -182,16 +182,18 @@ check_tidy_omic <- function(tidy_omic, fast_check = TRUE) {
     unname()
 
   if (length(setdiff(join_variables, colnames(tidy_omic$data))) != 0) {
-    stop(paste0(
-      paste(setdiff(join_variables, colnames(tidy_omic$data)), collapse = ", "),
-      ": are present in the design but not data.frames"
+    missing_vars <- setdiff(join_variables, colnames(tidy_omic$data))
+    cli::cli_abort(c(
+      "Design and data mismatch",
+      "x" = "{.var {missing_vars}} {?is/are} present in the design but not in the data"
     ))
   }
 
   if (length(setdiff(colnames(tidy_omic$data), join_variables)) != 0) {
-    stop(paste0(
-      paste(setdiff(colnames(tidy_omic$data), join_variables), collapse = ", "),
-      ": are present in the data.frames but not in the design"
+    extra_vars <- setdiff(colnames(tidy_omic$data), join_variables)
+    cli::cli_abort(c(
+      "Design and data mismatch",
+      "x" = "{.var {extra_vars}} {?is/are} present in the data but not in the design"
     ))
   }
 
@@ -216,15 +218,13 @@ check_tidy_omic <- function(tidy_omic, fast_check = TRUE) {
             {!!rlang::sym(feature_pk)},
             "; sample =",
             {!!rlang::sym(sample_pk)}
-            ))
+          ))
 
-      stop(glue::glue(
-      "{n_degenerate_keys} measurements were present multiple times with
-      the same feature and sample primary keys
-
-      For example:
-
-      {paste(degenerate_key_examples$combined_label, collapse = '\n\t')}"
+      cli::cli_abort(c(
+        "Duplicate measurements detected",
+        "x" = "{n_degenerate_keys} measurement{?s} {?was/were} present multiple times with the same feature and sample primary keys",
+        "i" = "Examples:",
+        " " = "{degenerate_key_examples$combined_label}"
       ))
     }
 
@@ -232,18 +232,18 @@ check_tidy_omic <- function(tidy_omic, fast_check = TRUE) {
     # with the same feature. These probably aren't actually feature attributes.
 
     feature_df <- tidy_omic$data %>%
-      dplyr::distinct(!!!rlang::syms(tidy_omic$design$features$variable))
+      dplyr::distinct(dplyr::across(dplyr::all_of(tidy_omic$design$features$variable)))
 
     if (nrow(tidy_omic$design$features) > 1) {
       degenerate_feature_attributes <- feature_df %>%
         dplyr::mutate(dplyr::across(
-          c(setdiff(colnames(feature_df), tidy_omic$design$feature_pk)),
+          dplyr::all_of(setdiff(colnames(feature_df), tidy_omic$design$feature_pk)),
           as.character
         )) %>%
-        tidyr::gather(
-          attribute,
-          attribute_value,
-          -!!rlang::sym(tidy_omic$design$feature_pk)
+        tidyr::pivot_longer(
+          cols = -dplyr::all_of(tidy_omic$design$feature_pk),
+          names_to = "attribute",
+          values_to = "attribute_value"
         ) %>%
         dplyr::distinct() %>%
         dplyr::group_by(
@@ -259,11 +259,12 @@ check_tidy_omic <- function(tidy_omic, fast_check = TRUE) {
         dplyr::count(attribute)
 
       if (nrow(degenerate_feature_attributes) != 0) {
-        stop(degenerate_feature_attributes %>%
-          glue::glue_data(
-            "\"{attribute}\" was duplicated for {n} features
-            this variable should not be a feature attribute. "
-          ))
+        cli::cli_abort(c(
+          "Invalid feature attributes detected",
+          "x" = degenerate_feature_attributes %>%
+            glue::glue_data("{.var {attribute}} was duplicated for {n} feature{?s}"),
+          "i" = "{?This variable/These variables} should not be feature attribute{?s}"
+        ))
       }
     }
 
@@ -271,18 +272,18 @@ check_tidy_omic <- function(tidy_omic, fast_check = TRUE) {
     # with the same sample. These probably aren't actually sample attributes.
 
     sample_df <- tidy_omic$data %>%
-      dplyr::distinct(!!!rlang::syms(tidy_omic$design$samples$variable))
+      dplyr::distinct(dplyr::across(dplyr::all_of(tidy_omic$design$samples$variable)))
 
     if (nrow(tidy_omic$design$samples) > 1) {
       degenerate_sample_attributes <- sample_df %>%
         dplyr::mutate(dplyr::across(
-          c(setdiff(colnames(sample_df), tidy_omic$design$sample_pk)),
+          dplyr::all_of(setdiff(colnames(sample_df), tidy_omic$design$sample_pk)),
           as.character
         )) %>%
-        tidyr::gather(
-          attribute,
-          attribute_value,
-          -!!rlang::sym(tidy_omic$design$sample_pk)
+        tidyr::pivot_longer(
+          cols = -dplyr::all_of(tidy_omic$design$sample_pk),
+          names_to = "attribute",
+          values_to = "attribute_value"
         ) %>%
         dplyr::distinct() %>%
         dplyr::group_by(
@@ -298,9 +299,15 @@ check_tidy_omic <- function(tidy_omic, fast_check = TRUE) {
         dplyr::count(attribute)
 
       if (nrow(degenerate_sample_attributes) != 0) {
-        stop(degenerate_sample_attributes %>%
-          glue::glue_data("\"{attribute}\" was duplicated for {n} features
-                          this variable should not be a feature attribute. "))
+        error_msgs <- degenerate_sample_attributes %>%
+          dplyr::mutate(msg = glue::glue('"{attribute}" was duplicated for {n} samples')) %>%
+          dplyr::pull(msg)
+
+        cli::cli_abort(c(
+          "Invalid sample attributes detected",
+          "x" = error_msgs,
+          "i" = "These variables should not be sample attributes"
+        ))
       }
     }
   }
@@ -500,17 +507,18 @@ check_triple_omic <- function(triple_omic, fast_check = TRUE) {
   )
 
   # primary keys have matching classes and levels
-
   features_features <- triple_omic$features[[triple_omic$design$feature_pk]]
   measurements_features <- triple_omic$measurements[[
     triple_omic$design$feature_pk
   ]]
+
   if (!all(class(features_features) == class(measurements_features))) {
-    stop(glue::glue(
-      "{triple_omic$design$feature_pk} classes differ between the features
-        and measurements table"
+    cli::cli_abort(c(
+      "Primary key class mismatch",
+      "x" = "{.var {triple_omic$design$feature_pk}} classes differ between the features and measurements table"
     ))
   }
+
   if (any(class(features_features) %in% c("factor", "ordered"))) {
     checkmate::checkFactor(features_features, levels(measurements_features))
   }
@@ -519,48 +527,46 @@ check_triple_omic <- function(triple_omic, fast_check = TRUE) {
   measurements_samples <- triple_omic$measurements[[
     triple_omic$design$sample_pk
   ]]
+
   if (!all(class(samples_samples) == class(measurements_samples))) {
-    stop(glue::glue(
-      "{triple_omic$design$sample_pk} classes differ between the samples
-        and measurements table"
+    cli::cli_abort(c(
+      "Primary key class mismatch",
+      "x" = "{.var {triple_omic$design$sample_pk}} classes differ between the samples and measurements table"
     ))
   }
+
   if (any(class(samples_samples) %in% c("factor", "ordered"))) {
     checkmate::checkFactor(samples_samples, levels(measurements_samples))
   }
 
   # thorough checking
-
   if (!fast_check) {
     # classes match
     # one row per feature in features
-
     features_not_unique <- triple_omic$features %>%
       dplyr::count(!!rlang::sym(triple_omic$design$feature_pk)) %>%
       dplyr::filter(n > 1)
 
     if (nrow(features_not_unique) != 0) {
-      stop(glue::glue(
-        "{nrow(features_not_unique)} features were present multiple times with
-        the same feature primary key"
+      cli::cli_abort(c(
+        "Duplicate feature primary keys detected",
+        "x" = "{nrow(features_not_unique)} feature{?s} {?was/were} present multiple times with the same feature primary key"
       ))
     }
 
     # one row per sample in samples
-
     samples_not_unique <- triple_omic$samples %>%
       dplyr::count(!!rlang::sym(triple_omic$design$sample_pk)) %>%
       dplyr::filter(n > 1)
 
     if (nrow(samples_not_unique) != 0) {
-      stop(glue::glue(
-        "{nrow(samples_not_unique)} samples were present multiple times with
-        the same sample primary key"
+      cli::cli_abort(c(
+        "Duplicate sample primary keys detected",
+        "x" = "{nrow(samples_not_unique)} sample{?s} {?was/were} present multiple times with the same sample primary key"
       ))
     }
 
     # one row per measurement in measurements
-
     measurements_not_unique <- triple_omic$measurements %>%
       dplyr::count(
         !!rlang::sym(triple_omic$design$feature_pk),
@@ -569,9 +575,9 @@ check_triple_omic <- function(triple_omic, fast_check = TRUE) {
       dplyr::filter(n > 1)
 
     if (nrow(measurements_not_unique) != 0) {
-      stop(glue::glue(
-        "{nrow(measurements_not_unique)} measurements were present multiple times with
-        the same feature and sample primary keys"
+      cli::cli_abort(c(
+        "Duplicate measurements detected",
+        "x" = "{nrow(measurements_not_unique)} measurement{?s} {?was/were} present multiple times with the same feature and sample primary keys"
       ))
     }
   }
@@ -726,7 +732,7 @@ tidy_to_triple <- function(tidy_omic) {
 #' library(dplyr)
 #'
 #' wide_measurements <- brauer_2008_triple[["measurements"]] %>%
-#'   tidyr::spread(sample, expression)
+#'   tidyr::pivot_wider(names_from = sample, values_from = expression)
 #'
 #' wide_df <- brauer_2008_triple[["features"]] %>%
 #'   left_join(wide_measurements, by = "name")
@@ -905,8 +911,9 @@ tomic_to <- function(tomic, to_class) {
     ) {
       output <- triple_to_tidy(tomic)
     } else {
-      stop(glue::glue(
-        "No converter exist for {current_primary_class} to {to_class}"
+      cli::cli_abort(c(
+        "No converter available",
+        "x" = "No converter exists for {.cls {current_primary_class}} to {.cls {to_class}}"
       ))
     }
   }
@@ -935,8 +942,12 @@ check_tomic <- function(tomic, fast_check = TRUE) {
   } else if ("tidy_omic" %in% class(tomic)) {
     check_tidy_omic(tomic, fast_check)
   } else {
-    stop("tomic is not a tidy_omic or triple_omic. This is unexpected since
-           the object has the \"tomic\" class.")
+    cli::cli_abort(c(
+      "Invalid tomic object",
+      "x" = "Object is not a {.cls tidy_omic} or {.cls triple_omic}",
+      "i" = "This is unexpected since the object has the {.cls tomic} class",
+      "i" = "Please report this as a bug"
+    ))
   }
 
   return(invisible(0))
@@ -995,7 +1006,7 @@ get_identifying_keys <- function(tomic, table) {
   } else if (table == "measurements") {
     ids <- c(tomic$design$feature_pk, tomic$design$sample_pk)
   } else {
-    stop(glue::glue("{table} is not a valid choice"))
+    cli::cli_abort("{.var {table}} is not a valid choice")
   }
 
   return(ids)
@@ -1025,10 +1036,11 @@ infer_tomic_table_type <- function(tomic, tomic_table) {
   )
 
   if (is.na(table_type)) {
-    stop(
-      "based on the \"tomic\" primary keys, tomic_table doesn't appear to
-       be features, samples or measurements"
-    )
+    cli::cli_abort(c(
+      "Cannot determine table type",
+      "x" = "Based on the primary keys, {.arg tomic_table} doesn't appear to be features, samples, or measurements",
+      "i" = "Table must contain either {.var {feature_pk}}, {.var {sample_pk}}, or both"
+    ))
   }
 
   return(table_type)

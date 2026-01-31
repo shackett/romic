@@ -38,6 +38,6 @@ test_that("Partial string matching works", {
   # non match
   expect_error(var_partial_match("highlander", mtcars), regex = "did not match")
   # too vague - 2+ matches
-  expect_error(var_partial_match("m", mtcars), regex = "2\\+ variables")
+  expect_error(var_partial_match("m", mtcars), regex = "matched 2 variables")
 })
 

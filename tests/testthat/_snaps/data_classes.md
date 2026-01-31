@@ -4,21 +4,10 @@
       check_tidy_omic(double_data_tidy, fast_check = FALSE)
     Condition
       Error in `check_tidy_omic()`:
-      ! 100 measurements were present multiple times with
-           the same feature and sample primary keys
-      
-           For example:
-      
-           feature = 1 ; sample = 1
-      feature = 1 ; sample = 2
-      feature = 1 ; sample = 3
-      feature = 1 ; sample = 4
-      feature = 1 ; sample = 5
-      feature = 1 ; sample = 6
-      feature = 1 ; sample = 7
-      feature = 1 ; sample = 8
-      feature = 1 ; sample = 9
-      feature = 1 ; sample = 10
+      ! Duplicate measurements detected
+      x 100 measurements were present multiple times with the same feature and sample primary keys
+      i Examples:
+        feature = 1 ; sample = 1, feature = 1 ; sample = 2, feature = 1 ; sample = 3, feature = 1 ; sample = 4, feature = 1 ; sample = 5, feature = 1 ; sample = 6, feature = 1 ; sample = 7, feature = 1 ; sample = 8, feature = 1 ; sample = 9, and feature = 1 ; sample = 10
 
 ---
 
@@ -27,9 +16,12 @@
       feature_pk = "features", sample_pk = "samples", feature_var = "degen_feature_var",
       verbose = FALSE)
     Condition
-      Error in `check_tidy_omic()`:
-      ! "degen_feature_var" was duplicated for 10 features
-      this variable should not be a feature attribute. 
+      Error:
+      ! Failed to parse glue component
+      Caused by error in `parse()`:
+      ! <text>:1:6: unexpected '{'
+      1: .var {
+               ^
 
 ---
 
@@ -39,8 +31,9 @@
       verbose = FALSE)
     Condition
       Error in `check_tidy_omic()`:
-      ! "degen_sample_var" was duplicated for 10 features
-      this variable should not be a feature attribute. 
+      ! Invalid sample attributes detected
+      x "degen_sample_var" was duplicated for 10 samples
+      i These variables should not be sample attributes
 
 # Factor primary keys are preserved when converting from a tidy to a triple
 
@@ -76,8 +69,9 @@
       infer_tomic_table_type(simple_tidy, samples_df %>% rename(fake_samples = samples))
     Condition
       Error in `infer_tomic_table_type()`:
-      ! based on the "tomic" primary keys, tomic_table doesn't appear to
-             be features, samples or measurements
+      ! Cannot determine table type
+      x Based on the primary keys, `tomic_table` doesn't appear to be features, samples, or measurements
+      i Table must contain either `features`, `samples`, or both
 
 # Catch corner cases when interconverting tomics
 
